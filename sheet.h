@@ -28,6 +28,7 @@ private:
     std::vector<std::vector<std::unique_ptr< CellInterface >>> table_;
     Size print_area_;
 
-    void CorrectPrintArea();
     void PrintValue(const CellInterface::Value& value, std::ostream& output) const;
+    void CorrectPrintArea();
+    
 };

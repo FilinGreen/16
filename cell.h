@@ -1,6 +1,7 @@
 #pragma once
 
-#include <vector>
+#include <optional>
+#include <algorithm>
 
 #include "common.h"
 #include "formula.h"
@@ -45,7 +46,7 @@ private:
 
 class FormulaImpl : public Impl {
 public:
-    FormulaImpl(std::string formula);
+    FormulaImpl(const std::string& formula, const SheetInterface& sheet);
 
     CellInterface::Value GetValue() const override;
 
@@ -53,15 +54,18 @@ public:
 
     void Clear() override;
 
+    std::vector<Position> GetReferencedCells() const;
+
 private:
     std::unique_ptr<FormulaInterface> formula_;
+    const SheetInterface& sheet_;
 };
 
 
 
 class Cell : public CellInterface {
 public:
-    Cell() = default;
+    Cell(Position pos, SheetInterface& sheet);
 
     void Set(std::string text);
     void Clear();
@@ -69,8 +73,24 @@ public:
     Value GetValue() const override;
     std::string GetText() const override;
 
+    std::vector<Position> GetReferencedCells() const override;
+    std::vector<Position> GetCacheCells() const;
+
 private:
     std::unique_ptr<Impl> impl_;
     std::vector<Position> forward_positions_;
     std::vector<Position> backward_positions_;
+    SheetInterface* sheet_ = nullptr;
+    mutable std::optional<double> cache_;
+    Position current_position_;
+  
+    void CheckCyclicDependencies(std::vector<Position>& cells) const;
+    void CyclicChecker(Position checked_position) const;
+
+    void InvalidateCache();
+    void InformChilds();
+
+    bool HasCache() const;
+    void AddCacheCell(Position pos);
+    void ClearCache();
 };
